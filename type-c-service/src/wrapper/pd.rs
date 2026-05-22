@@ -146,7 +146,7 @@ where
             debug!("Port{}: Set max sink voltage, connected consumer found", local_port.0);
             if voltage_mv.is_some()
                 && voltage_mv
-                    < power_device
+                    != power_device
                         .consumer_capability()
                         .await
                         .map(|c| c.capability.voltage_mv)
@@ -157,6 +157,14 @@ where
                     "Port{}: Disconnecting consumer before setting max sink voltage",
                     local_port.0
                 );
+
+                match controller.enable_sink_path(local_port, false).await {
+                    Ok(()) => Ok(controller::PortResponseData::Complete),
+                    Err(e) => match e {
+                        Error::Bus(_) => Err(PdError::Failed),
+                        Error::Pd(e) => Err(e),
+                    },
+                }?;
                 let _ = connected_consumer.disconnect().await;
             }
         }

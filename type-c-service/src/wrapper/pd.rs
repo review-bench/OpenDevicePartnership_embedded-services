@@ -165,7 +165,9 @@ where
                         Error::Pd(e) => Err(e),
                     },
                 }?;
-                let _ = connected_consumer.disconnect().await;
+                let _ = connected_consumer
+                    .disconnect(flags::ConsumerDisconnect::default().with_renegotiation(true))
+                    .await;
             }
         }
 
